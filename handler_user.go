@@ -18,7 +18,7 @@ func handlerLogin(s *state, cmd command) error {
 		fmt.Println("already logged in")
 		return nil
 	}
-	user, err := s.db.GetUser(context.Background(), username)
+	user, err := s.db.GetUserByName(context.Background(), username)
 	if err != nil {
 		return fmt.Errorf("couldn't get user: %w", err)
 	}
@@ -64,10 +64,10 @@ func handlerListUsers(s *state, cmd command) error {
 	}
 	for _, user := range users {
 		if user.Name == s.cfg.CurrentUserName {
-			fmt.Println(" * ", user.Name, "(current)")
+			fmt.Println(" *", user.Name, "(current)")
 			continue
 		}
-		fmt.Println(" * ", user.Name)
+		fmt.Println(" *", user.Name)
 	}
 	return nil
 }
