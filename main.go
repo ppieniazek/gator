@@ -25,14 +25,16 @@ func main() {
 	programState := &state{cfg: &cfg, db: database.New(db)}
 
 	cmds := commands{handlers: make(map[string]func(*state, command) error)}
-	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("login", handlerLogin)
 	cmds.register("reset", handlerReset)
 	cmds.register("users", handlerListUsers)
 
 	cmds.register("agg", handlerAgg)
 	cmds.register("addfeed", handlerAddFeed)
 	cmds.register("feeds", handlerListFeeds)
+	cmds.register("follow", handlerFollowFeed)
+	cmds.register("following", handlerListFollowedFeeds)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: gator <command> [args...]")

@@ -33,15 +33,15 @@ func handlerListFeeds(s *state, cmd command) error {
 }
 
 func handlerAddFeed(s *state, cmd command) error {
-	currentUser, err := s.db.GetUserByName(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("couldn't get current user: %w", err)
-	}
-
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("usage: %s <name> <url>", cmd.Name)
 	}
 	feedName, url := cmd.Args[0], cmd.Args[1]
+
+	currentUser, err := s.db.GetUserByName(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("couldn't get current user: %w", err)
+	}
 
 	newFeedParams := database.CreateFeedParams{
 		ID:        uuid.New(),
@@ -56,7 +56,18 @@ func handlerAddFeed(s *state, cmd command) error {
 	if err != nil {
 		return fmt.Errorf("couldn't create feed: %w", err)
 	}
-	fmt.Println("Feed created:")
+
+	if _, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    currentUser.ID,
+		FeedID:    newFeed.ID,
+	}); err != nil {
+		return fmt.Errorf("couldn't create feed_follow: %w", err)
+	}
+
+	fmt.Println("Feed created and followed:")
 	printFeed(newFeed, currentUser)
 	return nil
 }
