@@ -66,18 +66,28 @@ func (q *Queries) CreateFeedFollow(ctx context.Context, arg CreateFeedFollowPara
 	return i, err
 }
 
+const deleteFeedFollow = `-- name: DeleteFeedFollow :exec
+DELETE FROM feed_follows
+WHERE user_id = $1
+AND feed_id = $2
+`
+
+type DeleteFeedFollowParams struct {
+	UserID uuid.UUID
+	FeedID uuid.UUID
+}
+
+func (q *Queries) DeleteFeedFollow(ctx context.Context, arg DeleteFeedFollowParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFeedFollow, arg.UserID, arg.FeedID)
+	return err
+}
+
 const listFeedFollowsByUserID = `-- name: ListFeedFollowsByUserID :many
-WITH user_feed_follows AS (
-    SELECT id, created_at, updated_at, user_id, feed_id FROM feed_follows
-    WHERE feed_follows.user_id = $1
-)
-SELECT
-    user_feed_follows.id, user_feed_follows.created_at, user_feed_follows.updated_at, user_feed_follows.user_id, user_feed_follows.feed_id,
-    users.name AS user_name,
-    feeds.name AS feed_name
-FROM user_feed_follows
-INNER JOIN users ON user_feed_follows.user_id = users.id
-INNER JOIN feeds ON user_feed_follows.feed_id = feeds.id
+SELECT feed_follows.id, feed_follows.created_at, feed_follows.updated_at, feed_follows.user_id, feed_follows.feed_id, feeds.name AS feed_name, users.name AS user_name
+FROM feed_follows
+INNER JOIN feeds ON feed_follows.feed_id = feeds.id
+INNER JOIN users ON feed_follows.user_id = users.id
+WHERE feed_follows.user_id = $1
 `
 
 type ListFeedFollowsByUserIDRow struct {
@@ -86,8 +96,8 @@ type ListFeedFollowsByUserIDRow struct {
 	UpdatedAt time.Time
 	UserID    uuid.UUID
 	FeedID    uuid.UUID
-	UserName  string
 	FeedName  string
+	UserName  string
 }
 
 func (q *Queries) ListFeedFollowsByUserID(ctx context.Context, userID uuid.UUID) ([]ListFeedFollowsByUserIDRow, error) {
@@ -105,8 +115,8 @@ func (q *Queries) ListFeedFollowsByUserID(ctx context.Context, userID uuid.UUID)
 			&i.UpdatedAt,
 			&i.UserID,
 			&i.FeedID,
-			&i.UserName,
 			&i.FeedName,
+			&i.UserName,
 		); err != nil {
 			return nil, err
 		}
